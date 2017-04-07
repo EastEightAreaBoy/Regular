@@ -290,7 +290,9 @@ public class HtmlService {
 			try {
 				Response rs = con.execute();
 				Map<String, String> headers = rs.headers();
-				logger.info("<(￣ˇ￣)/ 登录PMO,状态:[{}], URL:[{}], JSESSIONID:[{}], headers:[{}]", rs.statusCode(), aimLocation, pMap.get("pmoJSESSIONID"), headers);
+				logger.info("<(￣ˇ￣)/ 登录PMO,状态:[{}], URL:[{}], JSESSIONID:[{}]", rs.statusCode(), aimLocation, pMap.get("pmoJSESSIONID"));
+				headers.put("body", rs.body());
+				return headers;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

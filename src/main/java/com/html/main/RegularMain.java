@@ -36,6 +36,7 @@ public class RegularMain {
 				Map<String, String> pMap = hs.getSTLocation("http://eoms.ultrapower.com.cn/ultrapmo/portal/index_new.action");
 
 				Map<String, String> result = hs.toAim(uMap, pMap);
+				System.out.println(result);
 			}
 		}
 		
