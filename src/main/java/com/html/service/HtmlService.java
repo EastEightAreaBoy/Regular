@@ -177,7 +177,7 @@ public class HtmlService {
 			Map<String, String> cookies =  rs.cookies();
 			//{Content-Language=en-US, Date=Fri, 07 Apr 2017 01:13:30 GMT, P3P=CP="CURa ADMa DEVa PSAo PSDo OUR BUS UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR", Content-Length=149, Expires=Thu, 01 Jan 1970 00:00:00 GMT, Connection=keep-alive, Content-Type=text/html;charset=UTF-8, Server=nginx/1.9.12, Cache-Control=no-store, Pragma=No-cache}
 			resultMap = rs.headers();//响应请求的Head数据
-			logger.info("JSESSIONID:[{}], 返回的状态码:[{}], Response URL[{}]", fi.getCookies().get("JSESSIONID"), rs.statusCode(), rs.url().toString());
+			logger.info("JSESSIONID:[{}]\n\t, 返回的状态码:[{}]\n\t, Response URL[{}]", fi.getCookies().get("JSESSIONID"), rs.statusCode(), rs.url().toString());
 			logger.info("提交表单后返回的cookies[{}], Response Head[{}]", cookies, resultMap);
 			//判断一下返回的结果中是不是有TGT，有就是成功了(～￣▽￣)～，没有就是失败了
 			if(cookies.get("CASTGC")!=null && !"".equals(cookies.get("CASTGC"))){
@@ -203,19 +203,22 @@ public class HtmlService {
 	public Map<String, String> getSTLocation(String url){
 		
 		Connection con=Jsoup.connect(url);
-		con.header("Accept", "*/*");
+		con.header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 		con.header("Connection", "keep-alive");
+		con.header("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
+		con.header("Accept-Encoding", "gzip, deflate");
+		con.header("Upgrade-Insecure-Requests", "1");
 		con.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");
 		con.method(Method.GET);
 		Map<String, String> map = new HashMap<>();
 		try {
 			Response rs = con.execute();
-			//System.out.println(rs.url()+"********************"+rs.headers());
-			String jsessionid = rs.cookie("JSESSIONID");
-			//String location = rs.header("Location");
-			map.put("pmoJSESSIONID", jsessionid);
+			Map<String,String> m = con.request().cookies();
+			//FIXME 这个获取的jseesionid和URL中的SESSIONID不一样很是不理解为啥，在浏览器上访问的时候发现Response中的和URL中的为同一个，不理解这里为啥不一样了。
+//			String jsessionid = rs.cookies().get("JSESSIONID");//jsessionid != m.get("JSESSIONID")
+			map.put("pmoJSESSIONID", m.get("JSESSIONID"));
 			map.put("location", rs.url().toString());
-			logger.info("此方法发送的url[{}], 返回的子票据获取的地址:[{}], 返回的JSESSIONID[{}]", url, rs.url(), jsessionid);
+			logger.info("getSTLocation此方法发送的url[{}]\n\t, 返回的子票据获取的地址:[{}]\n\t, 返回的JSESSIONID[{}]", url, rs.url(), m.get("JSESSIONID"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -229,24 +232,25 @@ public class HtmlService {
 	 * @return
 	 */
 	public String getST(Map<String, String> uMap, Map<String, String> pMap){
-		if(null != pMap.get("location") && uMap.get("JSESSIONID") != null){
+		if(null != pMap.get("location") && pMap.get("pmoJSESSIONID") != null){
 			Connection con=Jsoup.connect(pMap.get("location"));
 			con.header("Accept", "*/*");
 			con.header("Connection", "keep-alive");
 			con.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");
 			con.method(Method.GET);
-			con.cookie("JSESSIONID", uMap.get("JSESSIONID"));
-			con.data("CASTGC", uMap.get("CASTGC"));
+			con.cookie("JSESSIONID", pMap.get("pmoJSESSIONID"));
+			con.cookie("CASTGC", uMap.get("CASTGC"));
+			con.cookie("P_UUID", "");
 			try {
 				Response rs = con.execute();
-				logger.info("此方法发送的url[{}], 获取的到的URL【{}】, 发送的JSESSIONID[{}], 发送的TGT:[{}]",pMap.get("location"),rs.url().toString(),uMap.get("JSESSIONID"),uMap.get("CASTGC"));
+				logger.info("getST此方法发送的url[{}]\n\t, 获取的到的URL【{}】\n\t, 发送的JSESSIONID[{}]\n\t, 发送的TGT:[{}]",pMap.get("location"),rs.url().toString(),uMap.get("JSESSIONID"),uMap.get("CASTGC"));
 				return rs.url().toString();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} else {
 			logger.info("location:"+pMap.get("location"));
-			logger.info("JSESSIONID:"+uMap.get("JSESSIONID"));
+			logger.info("JSESSIONID:"+pMap.get("pmoJSESSIONID"));
 		}
 		return null;
 	}
@@ -264,7 +268,7 @@ public class HtmlService {
 			con.cookie("JSESSIONID", pMap.get("pmoJSESSIONID"));
 			try {
 				Response rs = con.execute();
-				logger.info("此方法发送的url[{}], 接收到的url[{}], 发送的JSESSIONID[{}]", stLocation,rs.url().toString(),pMap.get("pmoJSESSIONID"));
+				logger.info("getAimUrl此方法发送的url[{}]\n\t, 接收到的url[{}]\n\t, 发送的JSESSIONID[{}]", stLocation,rs.url().toString(),pMap.get("pmoJSESSIONID"));
 				return rs.url().toString();
 			} catch (IOException e) {
 				e.printStackTrace();

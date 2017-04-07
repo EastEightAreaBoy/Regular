@@ -2,20 +2,24 @@ package com.html.main;
 
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.html.model.FormInfo;
 import com.html.service.HtmlService;
 import com.html.service.Tess4jCode;
 
 public class RegularMain {
-
+	private final static Logger logger = Logger.getLogger(RegularMain.class)/*LoggerFactory.getLogger(RegularMain.getClass())*/;
+	
 	public static void main(String[] args) {
+		logger.info("--------------------开始----------------------");
 		HtmlService hs = new HtmlService();
 		//获取表单信息
 		FormInfo fi = hs.getHtmlMessage("http://pmo.ultrapower.com.cn/ucas/login");
 		fi.setAccount("wangzongjie");
 		fi.setCipher("77897753f3c976e2335585dd9c19a79a");
-		fi.setCheckCodeTemp("1989");//FIXME 不知道这个值怎么做的。
-		
+		double d = Math.random();
+		fi.setCheckCodeTemp(d*10000+"");//随机数，应该是为了防止不提交验证码的值吧。
 		//获取验证码，生成验证码图片
 		hs.getCheckCodeImg("http://pmo.ultrapower.com.cn/ucas/user/auth/generator.htm", fi.getCookies().get("JSESSIONID"));
 		
@@ -30,7 +34,7 @@ public class RegularMain {
 			Map<String, String> uMap = hs.postLoginUrl(url, fi, code);
 			if(null != uMap.get("CASTGC")){
 				Map<String, String> pMap = hs.getSTLocation("http://eoms.ultrapower.com.cn/ultrapmo/portal/index_new.action");
-				System.out.println(pMap);
+
 				Map<String, String> result = hs.toAim(uMap, pMap);
 			}
 		}
